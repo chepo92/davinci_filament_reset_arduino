@@ -1,4 +1,4 @@
-Da Vinci 3D Printer Filament EEPROM Reset Arduino Sketch
+Da Vinci 3D Printer Filament EEPROM Reset Arduino Sketch - Menu Driven
 ==============================
 Serial menu version.  Allows interactive read, edit, and write operations via the serial console in the Arduino IDE< or any terminal emulator.
 
