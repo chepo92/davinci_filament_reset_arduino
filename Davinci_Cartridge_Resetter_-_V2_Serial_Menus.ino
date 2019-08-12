@@ -487,6 +487,9 @@ String decode_color(int colorcode) {
     case 0x37:   
       return F("SUN ORANGE");
       break;
+    case 0x38:   
+      return F("PEARL WHITE");
+      break;
     case 0x41:   
       return F("PURPLE");
       break;
@@ -829,9 +832,9 @@ void view_edit_chip() {
           Serial.println(F("No edited value for color is currently set."));
           }
         Serial.println(F("Options: "));
-        Serial.println(F(" 31 GREY"));
-        Serial.println(F(" 32 CLEAR RED      33 CLEAR            34 BOTTLE GREEN     35 NEON MAGENTA"));
-        Serial.println(F(" 36 STEEL BLUE     37 SUN ORANGE       41 PURPLE           42 BLUE"));
+        Serial.println(F(" 31 GREY           32 CLEAR RED        33 CLEAR"));
+        Serial.println(F(" 34 BOTTLE GREEN   35 NEON MAGENTA     36 STEEL BLUE"));
+        Serial.println(F(" 37 SUN ORANGE     38 PEARL WHITE      41 PURPLE           42 BLUE"));
         Serial.println(F(" 43 NEON TANGERINE 44 VIRDITY          45 OLIVINE          46 GOLD"));
         Serial.println(F(" 47 GREEN          48 NEON GREEN       49 SNOW WHITE       4A NEON YELLOW"));
         Serial.println(F(" 4B BLACK          4C VIOLET           4D GRAPE PURPLE     4E PURPURIN"));
