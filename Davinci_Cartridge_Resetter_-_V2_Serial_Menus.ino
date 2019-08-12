@@ -368,34 +368,18 @@ byte contents[128];
 // Set global defaults for editable values and clear global edit flags
 //Materials
 boolean editflag_mt = false;
-//unsigned char edit_mt[] = {0x41}; //ABS
-//unsigned char edit_mt[] = {0x46}; //Flex
-//unsigned char edit_mt[] = {0x50}; //PLA
 unsigned char edit_mt[] = {0x00}; //default null
 
 // color
 boolean editflag_fcolor = false;
-//unsigned char edit_fcolor[] = {0x33,0x00}; // Clear
-//unsigned char edit_fcolor[] = {0x42,0x00}; // Blue
-//unsigned char edit_fcolor[] = {0x4b,0x00}; // Black
-//unsigned char edit_fcolor[] = {0x52,0x00}; // Red
-//unsigned char edit_fcolor[] = {0x57,0x00}; // White
-//unsigned char edit_fcolor[] = {0x59,0x00}; // Yellow
 unsigned char edit_fcolor[] = {0x00,0x00}; //default null
 
 // extruder temp, default is 210 C for ABS
 boolean editflag_et = false;
-//unsigned char edit_et[] = {0xd2,0x00}; // 210 C 
-//unsigned char edit_et[] = {0xe6,0x00}; // 230 C
-//unsigned char edit_et[] = {0xf5,0x00}; // 245 C
-//unsigned char edit_et[] = {0xfa,0x00}; // 250 C
 unsigned char edit_et[] = {0x00,0x00}; //default null
 
 // bed temp 90 degrees, default ABS
 boolean editflag_bt = false;
-//unsigned char edit_bt[] = {0x5a,0x00}; //90C
-//unsigned char edit_bt[] = {0x32,0x00}; //50C
-//unsigned char edit_bt[] = {0x28,0x00}; //40C
 unsigned char edit_bt[] = {0x00,0x00}; //default null
 
 // Serial Number
@@ -405,17 +389,11 @@ unsigned char edit_sn[13] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0
 // Total Cartridge Capacity
 boolean editflag_fcap = false;
 // little endian format, in mm (200000 = 200m)
-//unsigned char fcap[] = {0xc0,0xd4,0x01,0x00}; //120m 120000dec
-//unsigned char edit_fcap[] = {0x40,0x0d,0x03,0x00}; //200m  200000dec
-//unsigned char edit_fcap[] = {0x80,0xa9,0x03,0x00}; //240m  240000dec
-//unsigned char edit_fcap[] = {0x80,0x1a,0x06,0x00}; //400m 400000dec
 unsigned char edit_fcap[] = {0x00,0x00,0x00,0x00}; //default null
 
 // Remaining Filament Length
 boolean editflag_frem = false;
 // little endian format, in mm (200000 = 200m)
-//unsigned char edit_frem[] = {0xB5,0x31,0x00,0x00}; //custom 12.7m
-//unsigned char edit_frem[] = {0xF0,0x06,0x00,0x00}; //custom 1.7m
 unsigned char edit_frem[] = {0x00,0x00,0x00,0x00}; //default null
 
 // misc globals
@@ -431,6 +409,49 @@ void setup() {
   //clear the contents buffer
   memset(contents,0,128);
 }
+
+String decode_material(int materialcode) {
+  // decode a material value and return a String for the material name
+  // appears that they use ascii letters for their entries, 0x41 = A = ABS
+  //  41-A ABS  46-F FLEX  47-G PETG  50-P PLA    51-Q PLA
+  //  53-S ASA  54-T TOUGH PLA  55-U UVCR   56-V WATER SOLUBLE
+  //  59-Y NYLON    
+  switch (materialcode) {
+    case 0x41:   
+      return F("ABS");
+      break;
+    case 0x46:   
+      return F("FLEX");
+      break;
+    case 0x47:   
+      return F("PETG");
+      break;
+    case 0x50:   
+      return F("PLA");
+      break;
+    case 0x51:   
+      return F("PLA");
+      break;
+    case 0x53:   
+      return F("ASA");
+      break;
+    case 0x54:   
+      return F("TOUGH PLA");
+      break;
+    case 0x55:   
+      return F("UVCR");
+      break;
+    case 0x56:   
+      return F("WATER SOLUBLE");
+      break;
+    case 0x59:   
+      return F("NYLON");
+      break;
+    default:
+      return F("Unknown Material");
+      break; 
+    }
+} // decode_material
 
 String decode_color(int colorcode) {
   // decode a color value and return a String for the color name
@@ -548,25 +569,6 @@ String decode_color(int colorcode) {
       return F("Undefined Color");
       break; 
   }
-}
-
-String decode_material(int materialcode) {
-  // decode a material value and return a String for the material name
-  //    41 ABS  46 FLEX  50 PLA
-  switch (materialcode) {
-    case 0x41:   
-      return F("ABS");
-      break;
-    case 0x46:   
-      return F("FLEX");
-      break;
-    case 0x50:   
-      return F("PLA");
-      break;
-    default:
-      return F("Unknown Material");
-      break; 
-    }
 }
 
 void display_current_values() {
@@ -801,7 +803,9 @@ void view_edit_chip() {
           Serial.println();
           Serial.println(F("No edited value for material is currently set."));
           }
-        Serial.println(F("Options: 41 = ABS, 46 = Flex, 50 = PLA"));
+        Serial.println(F("Options: 41 = ABS, 46 = Flex, 47 = PETG, 50 = PLA, 51 = PLA"));
+        Serial.println(F("Options: 53 = ASA, 54 = Tough PLA, 55 = UVCR, 56 = Water Soluble"));
+        Serial.println(F("Options: 59 = Nylon"));
         Serial.println(F("Enter a new value for material (1 byte, Hex): "));
 
         serial_getline();
@@ -996,84 +1000,72 @@ void write_chip() {
   display_edited_values();
 
   if (count_edits>0) {
+    //loop looking for a chip for 15 seconds
+    i = 0;
     Serial.println();
-    Serial.println(F("Press Y to update EEPROM..."));
-    // flush the serial buffer
-    while(Serial.available()){
-      delay(100);
-      Serial.read();
-      }
-      
-    // Get the menu input
-    serial_getline();
-    if (response[0]=='y' or response[0]=='Y') {
-      //loop looking for a chip for 15 seconds
-      i = 0;
+    Serial.print(F("Looking for Da Vinci EEPROM CHIP (15 sec)"));    
+    do {
+      Serial.print(".");
+      digitalWrite(led, LOW); 
+      delay(500);
+      digitalWrite(led, HIGH);
+      ++i;
+    } while(!unio.read_status(&sr) && i < 30);
+  
+    if (i<30) {
       Serial.println();
-      Serial.print(F("Looking for Da Vinci EEPROM CHIP (15 sec)"));    
-      do {
-        Serial.print(".");
-        digitalWrite(led, LOW); 
-        delay(500);
-        digitalWrite(led, HIGH);
-        ++i;
-      } while(!unio.read_status(&sr) && i < 30);
+      Serial.println(F("Da Vinci EEPROM found..."));
+      Serial.println(F("Updating EEPROM..."));
+  
+      if (editflag_mt) {
+        status(unio.simple_write((const byte *)edit_mt,MATERIAL,1)); // Material
+        status(unio.simple_write((const byte *)edit_mt,64 + MATERIAL,1)); // Material
+        }
     
-      if (i<30) {
-        Serial.println();
-        Serial.println(F("Da Vinci EEPROM found..."));
-        Serial.println(F("Updating EEPROM..."));
+      if (editflag_fcolor) {
+        status(unio.simple_write((const byte *)edit_fcolor,COLOR,1)); // Color
+        status(unio.simple_write((const byte *)edit_fcolor,64 + COLOR,1)); // Color
+        }
     
-        if (editflag_mt) {
-          status(unio.simple_write((const byte *)edit_mt,MATERIAL,1)); // Material
-          status(unio.simple_write((const byte *)edit_mt,64 + MATERIAL,1)); // Material
-          }
-      
-        if (editflag_fcolor) {
-          status(unio.simple_write((const byte *)edit_fcolor,COLOR,1)); // Color
-          status(unio.simple_write((const byte *)edit_fcolor,64 + COLOR,1)); // Color
-          }
-      
-        if (editflag_et) {
-          status(unio.simple_write((const byte *)edit_et,HEADTEMP,2)); // extruder temp
-          status(unio.simple_write((const byte *)edit_et,64 + HEADTEMP,2)); // extruder temp
-          }
-      
-        if (editflag_bt) {
-          status(unio.simple_write((const byte *)edit_bt,BEDTEMP,2)); // bed temp
-          status(unio.simple_write((const byte *)edit_bt,64 + BEDTEMP,2)); // bed temp
-          }
-      
-        if (editflag_sn) {
-          status(unio.simple_write((const byte *)edit_sn,SN,12)); //Serial Number
-          status(unio.simple_write((const byte *)edit_sn,64 + SN,12)); //Serial Number
-          }
-      
-        if (editflag_fcap) {
-          status(unio.simple_write((const byte *)edit_fcap,TOTALLEN,4)); // Cartridge capacity
-          status(unio.simple_write((const byte *)edit_fcap,NEWLEN,4)); // Cartridge capacity second copy
-          status(unio.simple_write((const byte *)edit_fcap,64 + TOTALLEN,4)); // Cartridge capacity
-          status(unio.simple_write((const byte *)edit_fcap,64 + NEWLEN,4)); // Cartridge capacity second copy
-          }
-      
-        if (editflag_frem) {
-          status(unio.simple_write((const byte *)edit_frem,LEN2,4)); //remaining length
-          status(unio.simple_write((const byte *)edit_frem,LEN2 + 4,4)); //remaining length second copy, required for firmware v1.1.9
-          status(unio.simple_write((const byte *)edit_frem,LEN2 + 8,4)); //remaining length third copy, required for firmware v1.1.9
-          status(unio.simple_write((const byte *)edit_frem,64 + LEN2,4)); //remaining length
-          status(unio.simple_write((const byte *)edit_frem,64 + LEN2 + 4,4)); //remaining length second copy, required for firmware v1.1.9
-          status(unio.simple_write((const byte *)edit_frem,64 + LEN2 + 8,4)); //remaining length third copy, required for firmware v1.1.9
-          }  
-        Serial.println(F("Dumping Content after modification..."));  
-        dump_eeprom(contents,0,128);
-        Serial.println();
-        } //not timed out
-    else {
+      if (editflag_et) {
+        status(unio.simple_write((const byte *)edit_et,HEADTEMP,2)); // extruder temp
+        status(unio.simple_write((const byte *)edit_et,64 + HEADTEMP,2)); // extruder temp
+        }
+    
+      if (editflag_bt) {
+        status(unio.simple_write((const byte *)edit_bt,BEDTEMP,2)); // bed temp
+        status(unio.simple_write((const byte *)edit_bt,64 + BEDTEMP,2)); // bed temp
+        }
+    
+      if (editflag_sn) {
+        status(unio.simple_write((const byte *)edit_sn,SN,12)); //Serial Number
+        status(unio.simple_write((const byte *)edit_sn,64 + SN,12)); //Serial Number
+        }
+    
+      if (editflag_fcap) {
+        status(unio.simple_write((const byte *)edit_fcap,TOTALLEN,4)); // Cartridge capacity
+        status(unio.simple_write((const byte *)edit_fcap,NEWLEN,4)); // Cartridge capacity second copy
+        status(unio.simple_write((const byte *)edit_fcap,64 + TOTALLEN,4)); // Cartridge capacity
+        status(unio.simple_write((const byte *)edit_fcap,64 + NEWLEN,4)); // Cartridge capacity second copy
+        }
+    
+      if (editflag_frem) {
+        status(unio.simple_write((const byte *)edit_frem,LEN2,4)); //remaining length
+        status(unio.simple_write((const byte *)edit_frem,LEN2 + 4,4)); //remaining length second copy, required for firmware v1.1.9
+        status(unio.simple_write((const byte *)edit_frem,LEN2 + 8,4)); //remaining length third copy, required for firmware v1.1.9
+        status(unio.simple_write((const byte *)edit_frem,64 + LEN2,4)); //remaining length
+        status(unio.simple_write((const byte *)edit_frem,64 + LEN2 + 4,4)); //remaining length second copy, required for firmware v1.1.9
+        status(unio.simple_write((const byte *)edit_frem,64 + LEN2 + 8,4)); //remaining length third copy, required for firmware v1.1.9
+        }  
+      Serial.println(F("Dumping Content after modification..."));  
+      dump_eeprom(contents,0,128);
       Serial.println();
-      Serial.println(F("No EEPROM chip found before timeout."));
-      Serial.println();
-      } // timeout
-    } // y or n
+      } //not timed out
+  else {
+    Serial.println();
+    Serial.println(F("No EEPROM chip found before timeout."));
+    Serial.println();
+    } // timeout
   } //edits > 0
   else { // no edits to write
       Serial.println(F("No edits to write."));
