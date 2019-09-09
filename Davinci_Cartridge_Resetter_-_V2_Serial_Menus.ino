@@ -699,7 +699,7 @@ void display_edited_values() {
     if (editflag_sn) {
       count_edits++;
       Serial.print(F("  Edited Serial Number: 0x"));
-      for (i=0; i<=11; i++) {
+      for (i=11; i>=0; i--) {
       Serial.print(edit_sn[i] < 16 ? "0" : "");
       Serial.print(edit_sn[i], HEX);
       }
@@ -916,7 +916,7 @@ void view_edit_chip() {
         serial_getline();
         Serial.print(F("Parsed hex: "));
         j = 0;
-        for (i=0; i<=11; i++) {
+        for (i=11; i>=0; i--) {
           composedByte[0] = response[j];
           composedByte[1] = response[j+1];
           edit_sn[i] = strtoul(composedByte,0,16);
